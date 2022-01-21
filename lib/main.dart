@@ -88,12 +88,12 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     var markers = {
-    //   Marker(
-    //     markerId: MarkerId(_ansr.target.latitude.toString()),
-    //     position: _ansr
-    //         .target, /*
-    // icon:BitmapDescriptor.fromAssetImage(ImageConfiguration.empty, "assets/icons/location.png")*/
-    //   )
+      //   Marker(
+      //     markerId: MarkerId(_ansr.target.latitude.toString()),
+      //     position: _ansr
+      //         .target, /*
+      // icon:BitmapDescriptor.fromAssetImage(ImageConfiguration.empty, "assets/icons/location.png")*/
+      //   )
     };
 
     return Scaffold(
@@ -136,29 +136,48 @@ class _HomePageState extends State<HomePage> {
                         topLeft: Radius.circular(30.0),
                         topRight: Radius.circular(30.0))),
                 child: Center(
+                  // child:Text("dsaf")
                   child: ListView(
                     children: [
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text("Locations"),
+                        ),
+                      ),
                       ...Provider.of<LocationsProvider>(context, listen: true)
                           .locations
                           .map((location) => InkWell(
                               onTap: () => _moveToNewLocation(CameraPosition(
                                   target: LatLng(location.lat!, location.lng!),
                                   zoom: 16)),
-                              child: Material(/*borderRadius: BorderRadius.only(),*/
-                                child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: ListTile(
-                                      // leading: Image.asset("assets/icons/location.png"),
-                                      trailing: location.active!
-                                          ? Icon(
-                                              Icons.verified,
-                                              color: Theme.of(context)
-                                                  .primaryColor,
-                                            )
-                                          : Container(),
-                                      title: Text(location.name!),
-                                      subtitle: Text("Lat:${location.lat}-Lng:${location.lng}"),
-                                    )),
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 8.0),
+                                child: Material(
+                                  borderRadius: const BorderRadius.vertical(
+                                      bottom: Radius.circular(16)),
+                                  elevation: 1,
+                                  child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 16, horizontal: 0),
+                                      child: ListTile(
+                                        leading: Image.asset(
+                                          "assets/icons/location.png",
+                                          height: 100,
+                                          width: 100,
+                                        ),
+                                        // trailing: location.active!
+                                        //     ? Icon(
+                                        //         Icons.verified,
+                                        //         color: Theme.of(context)
+                                        //             .primaryColor,
+                                        //       )
+                                        //     : Container(),
+                                        title: Text(location.name!),
+                                        subtitle: Text(
+                                            location.active! ? "Active" : "InActive"),
+                                      )),
+                                ),
                               )))
                     ],
                   ),
