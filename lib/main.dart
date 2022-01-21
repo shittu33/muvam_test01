@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'package:muvam_test01/model/location.dart' as l;
 import 'package:muvam_test01/providers/location_provider.dart';
 import 'package:muvam_test01/providers/locations_provider.dart';
 import 'package:provider/provider.dart';
@@ -86,6 +87,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void initState() {
+
+  }
+
+  @override
   Widget build(BuildContext context) {
     var markers = {
       //   Marker(
@@ -123,6 +129,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showLocations() {
+
+    // Provider.of<LocationsProvider>(context, listen: false)
+    //     .getLocations();
+
     showModalBottomSheet(
         context: context,
         builder: (builder) {
@@ -151,38 +161,45 @@ class _HomePageState extends State<HomePage> {
                               onTap: () => _moveToNewLocation(CameraPosition(
                                   target: LatLng(location.lat!, location.lng!),
                                   zoom: 16)),
-                              child: Padding(
-                                padding: const EdgeInsets.only(bottom: 8.0),
-                                child: Material(
-                                  borderRadius: const BorderRadius.vertical(
-                                      bottom: Radius.circular(16)),
-                                  elevation: 1,
-                                  child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 16, horizontal: 0),
-                                      child: ListTile(
-                                        leading: Image.asset(
-                                          "assets/icons/location.png",
-                                          height: 100,
-                                          width: 100,
-                                        ),
-                                        // trailing: location.active!
-                                        //     ? Icon(
-                                        //         Icons.verified,
-                                        //         color: Theme.of(context)
-                                        //             .primaryColor,
-                                        //       )
-                                        //     : Container(),
-                                        title: Text(location.name!),
-                                        subtitle: Text(
-                                            location.active! ? "Active" : "InActive"),
-                                      )),
-                                ),
-                              )))
+                              child: LocationWidget(location: location)))
                     ],
                   ),
                 )),
           );
         });
+  }
+}
+
+class LocationWidget extends StatelessWidget {
+  const LocationWidget({
+    Key? key,
+    required this.location,
+  }) : super(key: key);
+
+  final l.Location location;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Material(
+        borderRadius: const BorderRadius.vertical(
+            bottom: Radius.circular(16)),
+        elevation: 1,
+        child: Padding(
+            padding: const EdgeInsets.symmetric(
+                vertical: 16, horizontal: 0),
+            child: ListTile(
+              leading: Image.asset(
+                "assets/icons/location.png",
+                height: 100,
+                width: 100,
+              ),
+              title: Text(location.name!),
+              subtitle: Text(
+                  location.active! ? "Active" : "InActive"),
+            )),
+      ),
+    );
   }
 }

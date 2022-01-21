@@ -9,6 +9,10 @@ class LocationsProvider extends ChangeNotifier {
 
   LocationsProvider() {
 
+    getLocations();
+  }
+
+  void getLocations() {
     LocationService().getLocations().then((value) {
 
         locations = value;
