@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
@@ -8,11 +10,10 @@ import 'package:muvam_test01/model/location.dart' as l;
 import 'package:muvam_test01/providers/location_provider.dart';
 import 'package:muvam_test01/providers/locations_provider.dart';
 import 'package:provider/provider.dart';
+import 'dart:ui' as ui;
 
-import 'services/locations.dart';
 
 void main() {
-
   if (defaultTargetPlatform == TargetPlatform.android) {
     AndroidGoogleMapsFlutter.useAndroidViewSurface = true;
   }
@@ -47,6 +48,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  BitmapDescriptor? currentLocationIcon;
+
+  BitmapDescriptor? otherLocationIcon;
+
+  final Set<Marker> _markers = {};
+
   final Location _location = Location();
 
   late GoogleMapController _controller;
@@ -54,15 +61,49 @@ class _HomePageState extends State<HomePage> {
   final CameraPosition initialPosition = const CameraPosition(
       target: LatLng(6.508770368877927, 3.355813127619282), zoom: 18);
 
+  @override
+  void initState() {
+    super.initState();
+    setCustomMarker();
+  }
+
+  void setCustomMarker() async {
+
+    currentLocationIcon = BitmapDescriptor.fromBytes(await getBytesFromAsset(
+        'assets/icons/walk.png', 70, 70));
+
+    otherLocationIcon = BitmapDescriptor.fromBytes(await getBytesFromAsset(
+        'assets/icons/location.png', 70, 70));
+  }
+
+  Future<Uint8List> getBytesFromAsset(String path, int width,
+      int height) async {
+    ByteData data = await rootBundle.load(path);
+    ui.Codec codec = await ui.instantiateImageCodec(
+        data.buffer.asUint8List(), targetWidth: width, targetHeight: height);
+    ui.FrameInfo fi = await codec.getNextFrame();
+    return (await fi.image.toByteData(format: ui.ImageByteFormat.png))!.buffer
+        .asUint8List();
+  }
+
   void _onMapCreated(GoogleMapController controller) {
     _controller = controller;
 
-
     Provider.of<LocationProvider>(context, listen: false)
         .fetchLocation((position) {
+      setState(() {
+        _markers.add(_getMarker(l.Location(
+            name: null,
+            active: false,
+            lat: position.latitude,
+            lng: position.latitude)));
+      });
+
       _moveToNewLocation(
-        CameraPosition(
-            target: LatLng(position.latitude, position.longitude), zoom: 16),
+          l.Location(name: null,
+              active: false,
+              lat: position.latitude,
+              lng: position.longitude)
       );
     });
 
@@ -71,23 +112,35 @@ class _HomePageState extends State<HomePage> {
           .updateCurrentLocation(LatLng(l.latitude!, l.longitude!));
     });
 
+    Provider.of<LocationsProvider>(context, listen: false).getLocations();
+  }
 
-    Provider.of<LocationsProvider>(context, listen: false)
-        .getLocations();
+  Marker _getMarker(l.Location position) {
+    return Marker(
+        markerId: MarkerId(position.toString() + position.lat.toString()),
+        position: LatLng(position.lat!, position.lng!),
+        infoWindow: InfoWindow(
+            title: position.name ?? position.name,
+            snippet: "Lat ${position.lat} - Lng ${position.lng}"),
+        icon:
+        position.name == null ? currentLocationIcon! : otherLocationIcon!);
   }
 
   CameraPosition _getLocationTarget() {
-
     var initialCameraPosition;
 
-    if (Provider.of<LocationProvider>(context, listen: false).currentLatLng !=
+    if (Provider
+        .of<LocationProvider>(context, listen: false)
+        .currentLatLng !=
         null) {
       initialCameraPosition = CameraPosition(
         target: LatLng(
-            Provider.of<LocationProvider>(context, listen: false)
+            Provider
+                .of<LocationProvider>(context, listen: false)
                 .currentLatLng!
                 .latitude,
-            Provider.of<LocationProvider>(context, listen: false)
+            Provider
+                .of<LocationProvider>(context, listen: false)
                 .currentLatLng!
                 .longitude),
         zoom: 0,
@@ -95,49 +148,46 @@ class _HomePageState extends State<HomePage> {
     } else {
       initialCameraPosition = initialPosition;
     }
+
     return initialCameraPosition;
   }
 
-
   @override
   Widget build(BuildContext context) {
-    var markers = {
-      //   Marker(
-      //     markerId: MarkerId(_ansr.target.latitude.toString()),
-      //     position: _ansr
-      //         .target, /*
-      // icon:BitmapDescriptor.fromAssetImage(ImageConfiguration.empty, "assets/icons/location.png")*/
-      //   )
-    };
-
     return Scaffold(
+
       appBar: AppBar(
         title: const Text("Movam Test"),
       ),
+
       body: GoogleMap(
         onMapCreated: _onMapCreated,
         mapType: MapType.normal,
         initialCameraPosition: _getLocationTarget(),
-        // markers: markers,
-        onCameraMove: (cameraPosition){
-
-        },
+        markers: _markers,
         myLocationEnabled: true,
       ),
+
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showLocations(),
         label: const Text('Locations'),
         icon: const Icon(Icons.arrow_forward_ios),
       ),
+
     );
   }
 
-  void _moveToNewLocation(cameraPosition) {
-    _controller.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+  void _moveToNewLocation(location) {
+    setState(() {
+      _markers.add(_getMarker(location));
+    });
+
+    _controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+        target: LatLng(location.lat!, location.lng!),
+        zoom: 18)));
   }
 
   void _showLocations() {
-
     showModalBottomSheet(
         context: context,
         builder: (builder) {
@@ -160,12 +210,12 @@ class _HomePageState extends State<HomePage> {
                           child: Text("Locations"),
                         ),
                       ),
-                      ...Provider.of<LocationsProvider>(context, listen: true)
+                      ...Provider
+                          .of<LocationsProvider>(context, listen: true)
                           .locations
-                          .map((location) => InkWell(
-                              onTap: () => _moveToNewLocation(CameraPosition(
-                                  target: LatLng(location.lat!, location.lng!),
-                                  zoom: 16)),
+                          .map((location) =>
+                          InkWell(
+                              onTap: () => _moveToNewLocation(location),
                               child: LocationWidget(location: location)))
                     ],
                   ),
@@ -176,6 +226,7 @@ class _HomePageState extends State<HomePage> {
 }
 
 class LocationWidget extends StatelessWidget {
+
   const LocationWidget({
     Key? key,
     required this.location,
@@ -188,21 +239,18 @@ class LocationWidget extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Material(
-        borderRadius: const BorderRadius.vertical(
-            bottom: Radius.circular(16)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
         elevation: 1,
         child: Padding(
-            padding: const EdgeInsets.symmetric(
-                vertical: 16, horizontal: 0),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
             child: ListTile(
               leading: Image.asset(
                 "assets/icons/location.png",
-                height: 100,
-                width: 100,
+                height: 40,
+                width: 40,
               ),
               title: Text(location.name!),
-              subtitle: Text(
-                  location.active! ? "Active" : "InActive"),
+              subtitle: Text(location.active! ? "Active" : "InActive"),
             )),
       ),
     );
