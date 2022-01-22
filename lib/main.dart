@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -11,6 +12,11 @@ import 'package:provider/provider.dart';
 import 'services/locations.dart';
 
 void main() {
+
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    AndroidGoogleMapsFlutter.useAndroidViewSurface = true;
+  }
+
   runApp(MultiProvider(providers: [
     ListenableProvider(create: (_) => LocationProvider()),
     ListenableProvider(create: (_) => LocationsProvider()),
@@ -51,6 +57,7 @@ class _HomePageState extends State<HomePage> {
   void _onMapCreated(GoogleMapController controller) {
     _controller = controller;
 
+
     Provider.of<LocationProvider>(context, listen: false)
         .fetchLocation((position) {
       _moveToNewLocation(
@@ -63,9 +70,14 @@ class _HomePageState extends State<HomePage> {
       Provider.of<LocationProvider>(context, listen: false)
           .updateCurrentLocation(LatLng(l.latitude!, l.longitude!));
     });
+
+
+    Provider.of<LocationsProvider>(context, listen: false)
+        .getLocations();
   }
 
   CameraPosition _getLocationTarget() {
+
     var initialCameraPosition;
 
     if (Provider.of<LocationProvider>(context, listen: false).currentLatLng !=
@@ -86,10 +98,6 @@ class _HomePageState extends State<HomePage> {
     return initialCameraPosition;
   }
 
-  @override
-  void initState() {
-
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -110,10 +118,10 @@ class _HomePageState extends State<HomePage> {
         onMapCreated: _onMapCreated,
         mapType: MapType.normal,
         initialCameraPosition: _getLocationTarget(),
-        onCameraMove: (CameraPosition position) {
-          // _updateInfoWindowsWithMarkers(infoWindowProvider, position);
-        },
         // markers: markers,
+        onCameraMove: (cameraPosition){
+
+        },
         myLocationEnabled: true,
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -129,9 +137,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showLocations() {
-
-    // Provider.of<LocationsProvider>(context, listen: false)
-    //     .getLocations();
 
     showModalBottomSheet(
         context: context,

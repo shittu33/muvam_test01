@@ -1,15 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.muvam_test01">
+    package="com.example.muvam_test01"
+    android:versionCode="1"
+    android:versionName="1.0">
 
     <!-- Although this consume more power, but it gives a more precise location,
       this should be use, if accuracy is most preferred -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.INTERNET" />
     <!-- This gives a less precise location, but it save power
       this should be use, if we want to minimize power usage-->
     <!--
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:icon="@mipmap/ic_launcher"
